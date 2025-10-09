@@ -1,1 +1,7 @@
 .env
+.venv
+
+*ipynb
+
+*.csv
+*json
