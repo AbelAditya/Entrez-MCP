@@ -1,0 +1,8 @@
+=== Interactive Entrez MCP Client ===
+Available commands:
+  search <db> <term> - Search a database
+  fetch <db> <id> - Fetch records
+  summary <db> <id> - Get summaries
+  info [db] - Get database info
+  tools - List all tools
+  quit - Exit

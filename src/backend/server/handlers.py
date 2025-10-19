@@ -1,10 +1,7 @@
-"""
-Tool Handlers
-Handles routing tool calls to appropriate services
-"""
-
 from typing import Any
+
 from mcp.types import TextContent
+
 from services.entrez import EntrezService
 
 

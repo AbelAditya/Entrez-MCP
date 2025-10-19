@@ -1,0 +1,3 @@
+=== AI-Powered Entrez Client ===
+Ask me anything about biological data!
+Type 'quit()' to exit

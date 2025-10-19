@@ -1,16 +1,11 @@
-"""
-MCP Server for NCBI Entrez
-Provides access to NCBI databases through the Entrez E-utilities
-"""
-
-import asyncio
 from typing import Any
+
 from mcp.server import Server
 from mcp.types import Tool, TextContent
 
-from services.entrez import EntrezService
 from utils.config import config
 from server.handlers import ToolHandler
+from services.entrez import EntrezService
 
 # Create service instance
 entrez_service = EntrezService()
