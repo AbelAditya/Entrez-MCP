@@ -10,200 +10,18 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from dotenv import load_dotenv
 import os
+import sys
+from pathlib import Path
 
 from mistralai import Mistral
 
 load_dotenv()
 
-ai = Mistral(api_key=os.getenv('MISTRAL_KEY'))
-
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "esearch",
-            "description": "Search an NCBI database and retrieve a list of UIDs matching the query. Databases include: pubmed, protein, nuccore, nucleotide, gene, genome, and more. Returns up to retmax results (default 20, max 100000).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "db": {
-                        "type": "string",
-                        "description": "Database to search (e.g., 'pubmed', 'protein', 'gene', 'nuccore')",
-                    },
-                    "term": {
-                        "type": "string",
-                        "description": "Search query using Entrez search syntax",
-                    },
-                    "retmax": {
-                        "type": "integer",
-                        "description": "Maximum number of UIDs to return (default: 20)",
-                        "default": 20,
-                    },
-                    "retstart": {
-                        "type": "integer",
-                        "description": "Starting index for results (default: 0)",
-                        "default": 0,
-                    },
-                    "sort": {
-                        "type": "string",
-                        "description": "Sort order (e.g., 'relevance', 'pub_date')",
-                    },
-                },
-                "required": ["db", "term"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "efetch",
-            "description": "Retrieve formatted data records from an NCBI database using UIDs. Returns full records in various formats (xml, json, text, fasta, gb, etc.).",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "db": {
-                        "type": "string",
-                        "description": "Database name (e.g., 'pubmed', 'protein', 'nuccore')",
-                    },
-                    "id": {
-                        "type": "string",
-                        "description": "Comma-separated list of UIDs to fetch",
-                    },
-                    "rettype": {
-                        "type": "string",
-                        "description": "Retrieval type (e.g., 'abstract', 'fasta', 'gb', 'xml')",
-                    },
-                    "retmode": {
-                        "type": "string",
-                        "description": "Retrieval mode ('xml', 'text', 'json')",
-                        "default": "xml",
-                    },
-                },
-                "required": ["db", "id"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "esummary",
-            "description": "Retrieve document summaries (DocSums) from an NCBI database using UIDs. Returns condensed information about records.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "db": {
-                        "type": "string",
-                        "description": "Database name",
-                    },
-                    "id": {
-                        "type": "string",
-                        "description": "Comma-separated list of UIDs",
-                    },
-                    "retmode": {
-                        "type": "string",
-                        "description": "Return mode ('xml' or 'json')",
-                        "default": "json",
-                    },
-                },
-                "required": ["db", "id"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "einfo",
-            "description": "Get information about available Entrez databases or detailed field information for a specific database. Call without db parameter to list all databases.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "db": {
-                        "type": "string",
-                        "description": "Database name (optional - omit to list all databases)",
-                    },
-                    "retmode": {
-                        "type": "string",
-                        "description": "Return mode ('xml' or 'json')",
-                        "default": "json",
-                    },
-                },
-                "required": [],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "elink",
-            "description": "Retrieve UIDs of related records in the same or different databases, or retrieve linkout URLs. Useful for finding related articles, genes, proteins, etc.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "dbfrom": {
-                        "type": "string",
-                        "description": "Source database",
-                    },
-                    "db": {
-                        "type": "string",
-                        "description": "Target database (can be same as dbfrom)",
-                    },
-                    "id": {
-                        "type": "string",
-                        "description": "Comma-separated list of UIDs from source database",
-                    },
-                    "linkname": {
-                        "type": "string",
-                        "description": "Specific link name (optional)",
-                    },
-                    "retmode": {
-                        "type": "string",
-                        "description": "Return mode ('xml' or 'json')",
-                        "default": "json",
-                    },
-                },
-                "required": ["dbfrom", "db", "id"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "egquery",
-            "description": "Provides counts of search results across all Entrez databases for a single query. Useful for determining which databases contain relevant results.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "term": {
-                        "type": "string",
-                        "description": "Search query",
-                    },
-                },
-                "required": ["term"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "espell",
-            "description": "Retrieve spelling suggestions for a text query in a specific database. Helps correct misspelled search terms.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "db": {
-                        "type": "string",
-                        "description": "Database name",
-                    },
-                    "term": {
-                        "type": "string",
-                        "description": "Search query to check spelling",
-                    },
-                },
-                "required": ["db", "term"],
-            },
-        },
-    },
-]
+# Initialize AI if API key is available
+ai = None
+if os.getenv('MISTRAL_KEY'):
+    from mistralai import Mistral
+    ai = Mistral(api_key=os.getenv('MISTRAL_KEY'))
 
 async def run_client():
     """Run the MCP client to interact with Entrez server"""
@@ -211,12 +29,14 @@ async def run_client():
     # Configure the server connection
     server_params = StdioServerParameters(
         command="python",
-        args=["mcp_server.py"],  # Path to your server script
+        args=["src/backend/server_main.py"],
     )
+    print(server_params)
     
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
-            # Initialize the session
+            # Initialize the session#
+            print(session)
             await session.initialize()
             
             # List available tools
@@ -380,7 +200,7 @@ async def interactive_mode():
     
     server_params = StdioServerParameters(
         command="python",
-        args=["mcp_server.py"],
+        args=["src/backend/server_main.py"],
     )
     
     async with stdio_client(server_params) as (read, write):
@@ -451,60 +271,77 @@ async def interactive_mode():
                 except Exception as e:
                     print(f"Error: {e}")
 
-# ---- THIS IS INCOMPLETE ----- #
 async def ai_mode():
+    """Run AI-powered client session"""
+    if not ai:
+        print("Error: MISTRAL_KEY not found. Please set MISTRAL_KEY environment variable.")
+        return
+    
     server_params = StdioServerParameters(
         command="python",
-        args=["mcp_server.py"],
+        args=["src/backend/server/main.py"],
     )
 
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
 
+            # Get available tools from server
+            tools_response = await session.list_tools()
+            tools = [{"name": tool.name, "description": tool.description} for tool in tools_response.tools]
+
             prompts = [{
                 "role": "system",
-                "content": "You are a MCP Client that can access and present info from Entrez toolset. You are to understand what the user is trying to ask and appropriately call a tool provided to you."
-                """for search strings keep the following in mind:-
-                ### Field Tags (use [FieldName] after terms):
-                - [Gene] or [Gene Name] - for gene symbols/names
-                - [Organism] - for species names
-                - [Author] - for author names in publications
-                - [Journal] - for journal names
-                - [Title] - for article titles
-                - [Abstract] - search in abstracts
-                - [MeSH Terms] - Medical Subject Headings
-                - [Publication Date] or [PDAT] - publication date
-                - [Protein Name] - for protein searches
-                - [All Fields] - search all fields (default if no tag)"""
+                "content": """You are a MCP Client that can access and present info from Entrez toolset. You are to understand what the user is trying to ask and appropriately call a tool provided to you.
+
+For search strings keep the following in mind:
+### Field Tags (use [FieldName] after terms):
+- [Gene] or [Gene Name] - for gene symbols/names
+- [Organism] - for species names
+- [Author] - for author names in publications
+- [Journal] - for journal names
+- [Title] - for article titles
+- [Abstract] - search in abstracts
+- [MeSH Terms] - Medical Subject Headings
+- [Publication Date] or [PDAT] - publication date
+- [Protein Name] - for protein searches
+- [All Fields] - search all fields (default if no tag)"""
             }]
 
+            print("=== AI-Powered Entrez Client ===")
+            print("Ask me anything about biological data!")
+            print("Type 'quit()' to exit\n")
+
             while True:
-                ques = input("Ques: ")
+                try:
+                    ques = input("Ques: ")
 
-                if ques == "quit()":
-                    break
+                    if ques == "quit()":
+                        break
 
-                prompts.append({'role':"user","content":ques})
+                    prompts.append({'role': "user", "content": ques})
 
-                resp = ai.chat.complete(
-                    messages=prompts,
-                    model='mistral-large-latest',
-                    tools=tools,
-                    tool_choice="any",
-                    parallel_tool_calls=False,
-                )
+                    resp = ai.chat.complete(
+                        messages=prompts,
+                        model='mistral-large-latest',
+                        tools=tools,
+                        tool_choice="any",
+                        parallel_tool_calls=False,
+                    )
 
-                print(resp.choices[0].message.tool_calls[0])    
-            
-# ---- SECTION END ----- #
+                    print(f"AI Response: {resp.choices[0].message.content}")
+                    
+                except KeyboardInterrupt:
+                    print("\nUse 'quit()' to exit")
+                except Exception as e:
+                    print(f"Error: {e}")
 
 if __name__ == "__main__":
-    import sys
+    args = sys.argv[1:]
     
-    if len(sys.argv) > 1 and sys.argv[1] == "--interactive":
+    if len(args) > 0 and args[0] == "--interactive":
         asyncio.run(interactive_mode())
-    elif len(sys.argv)>1 and sys.argv[1] == '--ai':
+    elif len(args)>0 and args[0] == '--ai':
         asyncio.run(ai_mode())
     else:
         asyncio.run(run_client())
