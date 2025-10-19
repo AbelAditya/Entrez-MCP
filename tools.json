@@ -1,0 +1,167 @@
+{
+  "tools": [
+    {
+      "name": "esearch",
+      "description": "Search an NCBI database and retrieve a list of UIDs matching the query. Databases include: pubmed, protein, nuccore, nucleotide, gene, genome, and more. Returns up to retmax results (default 20, max 100000).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Database to search (e.g., 'pubmed', 'protein', 'gene', 'nuccore')"
+          },
+          "term": {
+            "type": "string",
+            "description": "Search query using Entrez search syntax"
+          },
+          "retmax": {
+            "type": "integer",
+            "description": "Maximum number of UIDs to return (default: 20)",
+            "default": 20
+          },
+          "retstart": {
+            "type": "integer",
+            "description": "Starting index for results (default: 0)",
+            "default": 0
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort order (e.g., 'relevance', 'pub_date')"
+          }
+        },
+        "required": ["db", "term"]
+      }
+    },
+    {
+      "name": "efetch",
+      "description": "Retrieve formatted data records from an NCBI database using UIDs. Returns full records in various formats (xml, json, text, fasta, gb, etc.).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Database name (e.g., 'pubmed', 'protein', 'nuccore')"
+          },
+          "id": {
+            "type": "string",
+            "description": "Comma-separated list of UIDs to fetch"
+          },
+          "rettype": {
+            "type": "string",
+            "description": "Retrieval type (e.g., 'abstract', 'fasta', 'gb', 'xml')"
+          },
+          "retmode": {
+            "type": "string",
+            "description": "Retrieval mode ('xml', 'text', 'json')",
+            "default": "xml"
+          }
+        },
+        "required": ["db", "id"]
+      }
+    },
+    {
+      "name": "esummary",
+      "description": "Retrieve document summaries (DocSums) from an NCBI database using UIDs. Returns condensed information about records.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Database name"
+          },
+          "id": {
+            "type": "string",
+            "description": "Comma-separated list of UIDs"
+          },
+          "retmode": {
+            "type": "string",
+            "description": "Return mode ('xml' or 'json')",
+            "default": "json"
+          }
+        },
+        "required": ["db", "id"]
+      }
+    },
+    {
+      "name": "einfo",
+      "description": "Get information about available Entrez databases or detailed field information for a specific database. Call without db parameter to list all databases.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Database name (optional - omit to list all databases)"
+          },
+          "retmode": {
+            "type": "string",
+            "description": "Return mode ('xml' or 'json')",
+            "default": "json"
+          }
+        }
+      }
+    },
+    {
+      "name": "elink",
+      "description": "Retrieve UIDs of related records in the same or different databases, or retrieve linkout URLs. Useful for finding related articles, genes, proteins, etc.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "dbfrom": {
+            "type": "string",
+            "description": "Source database"
+          },
+          "db": {
+            "type": "string",
+            "description": "Target database (can be same as dbfrom)"
+          },
+          "id": {
+            "type": "string",
+            "description": "Comma-separated list of UIDs from source database"
+          },
+          "linkname": {
+            "type": "string",
+            "description": "Specific link name (optional)"
+          },
+          "retmode": {
+            "type": "string",
+            "description": "Return mode ('xml' or 'json')",
+            "default": "json"
+          }
+        },
+        "required": ["dbfrom", "db", "id"]
+      }
+    },
+    {
+      "name": "egquery",
+      "description": "Provides counts of search results across all Entrez databases for a single query. Useful for determining which databases contain relevant results.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "term": {
+            "type": "string",
+            "description": "Search query"
+          }
+        },
+        "required": ["term"]
+      }
+    },
+    {
+      "name": "espell",
+      "description": "Retrieve spelling suggestions for a text query in a specific database. Helps correct misspelled search terms.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "db": {
+            "type": "string",
+            "description": "Database name"
+          },
+          "term": {
+            "type": "string",
+            "description": "Search query to check spelling"
+          }
+        },
+        "required": ["db", "term"]
+      }
+    }
+  ]
+}

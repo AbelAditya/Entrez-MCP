@@ -7,3 +7,9 @@
 
 *.csv
 *json
+
+.vscode/
+__pycache__/
+*.pyc
+
+*/node_modules/
